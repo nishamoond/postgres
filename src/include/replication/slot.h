@@ -44,18 +44,21 @@ typedef enum ReplicationSlotPersistency
  * Slots can be invalidated, e.g. due to max_slot_wal_keep_size. If so, the
  * 'invalidated' field is set to a value other than _NONE.
  *
- * When adding a new invalidation cause here, remember to update
+ * When adding a new invalidation cause here, the value must be powers of 2
+ * (e.g., 1, 2, 4...) for proper bitwise operations. Also, remember to update
  * SlotInvalidationCauses and RS_INVAL_MAX_CAUSES.
  */
 typedef enum ReplicationSlotInvalidationCause
 {
-	RS_INVAL_NONE,
+	RS_INVAL_NONE = 0x00,
 	/* required WAL has been removed */
-	RS_INVAL_WAL_REMOVED,
+	RS_INVAL_WAL_REMOVED = 0x01,
 	/* required rows have been removed */
-	RS_INVAL_HORIZON,
+	RS_INVAL_HORIZON = 0x02,
 	/* wal_level insufficient for slot */
-	RS_INVAL_WAL_LEVEL,
+	RS_INVAL_WAL_LEVEL = 0x04,
+	/* idle slot timeout has occurred */
+	RS_INVAL_IDLE_TIMEOUT = 0x08,
 } ReplicationSlotInvalidationCause;
 
 extern PGDLLIMPORT const char *const SlotInvalidationCauses[];
@@ -254,6 +257,7 @@ extern PGDLLIMPORT ReplicationSlot *MyReplicationSlot;
 /* GUCs */
 extern PGDLLIMPORT int max_replication_slots;
 extern PGDLLIMPORT char *synchronized_standby_slots;
+extern PGDLLIMPORT int idle_replication_slot_timeout_mins;
 
 /* shmem initialization functions */
 extern Size ReplicationSlotsShmemSize(void);
